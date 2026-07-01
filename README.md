@@ -19,5 +19,3 @@ Qucs-Sを使って、RF回路・伝送線路理論の基礎を確認するため
 - S11
 - インピーダンス整合 / Impedance Matching
 - λ/4線路 / Quarter-wave Transformer
-- LPF
-- LNA
