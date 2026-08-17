@@ -108,30 +108,31 @@ def main():
         {
             "font.size": 12,
             "figure.figsize": (14, 8),
+            "figure.facecolor": "white",
             "axes.grid": False,
         }
     )
 
     fig = plt.figure(constrained_layout=True)
-    gs = fig.add_gridspec(3, 2, height_ratios=[0.76, 1.0, 1.1], width_ratios=[1.08, 1.0])
+    gs = fig.add_gridspec(3, 2, height_ratios=[0.42, 1.12, 1.18], width_ratios=[1.08, 1.0])
 
     ax_title = fig.add_subplot(gs[0, 0])
     ax_title.axis("off")
-    ax_title.text(0.0, 0.78, "L, C定数を求める", color="crimson", fontsize=27, weight="bold")
-    ax_title.text(0.0, 0.20, "3 dBリップル・5次チェビシェフ型LPF", fontsize=18)
+    ax_title.text(0.0, 0.70, "LC Scaling for Chebyshev I LPF", color="#1f2d3d", fontsize=20, weight="bold")
+    ax_title.text(0.0, 0.18, "3 dBリップル・5次チェビシェフ型LPFの正規化値を 50 Ω, 3.8 GHz へ変換する。", fontsize=12.5, color="#566573")
 
     ax_note = fig.add_subplot(gs[0, 1])
     ax_note.axis("off")
-    ax_note.text(0.0, 0.78, r"$R=1\,\Omega,\ \omega_c=1$ で正規化された値", fontsize=18)
-    ax_note.text(0.0, 0.30, "選択する行: N=5", fontsize=17, color="crimson", weight="bold")
+    ax_note.text(0.0, 0.70, r"Prototype: $R=1\,\Omega,\ \omega_c=1$", fontsize=16, color="#1f2d3d")
+    ax_note.text(0.0, 0.24, "Selected order: N = 5", fontsize=14, color="#006d77", weight="bold")
 
     ax_norm = fig.add_subplot(gs[1, 0])
     draw_lpf(ax_norm, y=3.2, normalized=True)
-    ax_norm.text(0.0, 4.55, "正規化プロトタイプ", fontsize=17, weight="bold")
+    ax_norm.text(0.0, 4.55, "Normalized Prototype", fontsize=15, weight="bold", color="#243447")
 
     ax_scaled = fig.add_subplot(gs[2, 0])
     draw_lpf(ax_scaled, y=3.45, normalized=False)
-    ax_scaled.text(0.0, 4.65, "50 Ω, 3.8 GHzへスケーリング後", fontsize=17, weight="bold")
+    ax_scaled.text(0.0, 4.65, "Scaled Network: 50 Ω, 3.8 GHz", fontsize=15, weight="bold", color="#243447")
 
     ax_formula = fig.add_subplot(gs[1, 1])
     ax_formula.axis("off")
@@ -140,20 +141,21 @@ def main():
         0.96,
         0.86,
         boxstyle="round,pad=0.03",
-        facecolor="#f7f7f7",
-        edgecolor="#bdbdbd",
+        facecolor="#f7f9fb",
+        edgecolor="#d5dbe3",
         linewidth=1.2,
     )
     ax_formula.add_patch(box)
-    ax_formula.text(0.07, 0.78, "スケーリング式", fontsize=18, weight="bold")
+    ax_formula.text(0.07, 0.78, "Scaling Equations", fontsize=16, weight="bold", color="#243447")
     ax_formula.text(
         0.10,
         0.52,
         rf"$\omega_c=2\pi f_c=2\pi({FC_HZ / 1e9:.1f}\,\mathrm{{GHz}})"
         rf"={OMEGA_C / 1e9:.3f}\times10^9$",
         fontsize=16,
+        color="#1f2d3d",
     )
-    ax_formula.text(0.10, 0.32, rf"$R_0={R0_OHM:.0f}\,\Omega$", fontsize=16)
+    ax_formula.text(0.10, 0.32, rf"$R_0={R0_OHM:.0f}\,\Omega$", fontsize=16, color="#1f2d3d")
     ax_formula.text(
         0.10,
         0.12,
@@ -161,6 +163,7 @@ def main():
         "      "
         r"$C'_k=\dfrac{g_k}{R_0\omega_c}$",
         fontsize=18,
+        color="#1f2d3d",
     )
 
     ax_table = fig.add_subplot(gs[2, 1])
@@ -185,10 +188,10 @@ def main():
     for (row, col), cell in table.get_celld().items():
         cell.set_linewidth(1.0)
         if row == 0:
-            cell.set_facecolor("#e8f2d2")
+            cell.set_facecolor("#e6eef5")
             cell.set_text_props(weight="bold")
 
-    ax_table.text(0.0, 0.95, "計算結果", fontsize=17, weight="bold", transform=ax_table.transAxes)
+    ax_table.text(0.0, 0.95, "Calculated Values", fontsize=15, weight="bold", color="#243447", transform=ax_table.transAxes)
 
     fig.savefig(OUTPUT_PATH, dpi=200)
     fig.savefig(SVG_OUTPUT_PATH)

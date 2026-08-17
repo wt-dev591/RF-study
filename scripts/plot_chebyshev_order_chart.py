@@ -10,6 +10,7 @@ os.environ.setdefault("MPLCONFIGDIR", str(Path(tempfile.gettempdir()) / "matplot
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import font_manager
+from matplotlib.patches import FancyBboxPatch
 
 
 OUTPUT_PATH = Path(__file__).resolve().parents[1] / "logs" / "image-5.png"
@@ -78,6 +79,23 @@ def draw_ladder(ax):
     ax.text(8.8, 2.45, "5次", fontsize=15)
 
 
+def add_panel(ax, title):
+    panel = FancyBboxPatch(
+        (0.0, 0.0),
+        1.0,
+        1.0,
+        boxstyle="round,pad=0.018",
+        facecolor="#f7f9fb",
+        edgecolor="#d5dbe3",
+        linewidth=1.0,
+        transform=ax.transAxes,
+        clip_on=False,
+        zorder=-1,
+    )
+    ax.add_patch(panel)
+    ax.text(0.045, 0.93, title, fontsize=13, weight="bold", color="#243447", transform=ax.transAxes)
+
+
 def main():
     setup_japanese_font()
 
@@ -92,50 +110,67 @@ def main():
             "axes.grid": True,
             "grid.alpha": 0.32,
             "figure.figsize": (14, 8),
+            "figure.facecolor": "white",
+            "axes.facecolor": "white",
         }
     )
 
     fig = plt.figure(constrained_layout=True)
-    gs = fig.add_gridspec(2, 3, width_ratios=[1.18, 1.35, 1.35])
-    ax_info = fig.add_subplot(gs[:, 0])
-    ax_top = fig.add_subplot(gs[0, 1:])
-    ax_bottom = fig.add_subplot(gs[1, 1:])
+    gs = fig.add_gridspec(3, 3, height_ratios=[0.32, 1.0, 1.0], width_ratios=[1.0, 1.35, 1.35])
+    ax_header = fig.add_subplot(gs[0, :])
+    ax_info = fig.add_subplot(gs[1:, 0])
+    ax_top = fig.add_subplot(gs[1, 1:])
+    ax_bottom = fig.add_subplot(gs[2, 1:])
+
+    ax_header.axis("off")
+    ax_header.text(0.0, 0.72, "Chebyshev I LPF Order Selection", fontsize=20, weight="bold", color="#1f2d3d")
+    ax_header.text(
+        0.0,
+        0.22,
+        "5次チェビシェフ低域通過フィルタの次数選定。仕様点における減衰量と必要次数を比較する。",
+        fontsize=12.5,
+        color="#566573",
+    )
 
     ax_info.axis("off")
-    ax_info.text(0.0, 0.96, "等リップル型LPF", color="crimson", fontsize=23, weight="bold")
-    ax_info.text(0.0, 0.78, "今回作成するLPFの仕様", fontsize=15, weight="bold")
+    add_panel(ax_info, "Design Conditions")
     ax_info.text(
-        0.04,
-        0.70,
+        0.07,
+        0.80,
         "\n".join(
             [
-                f"・カットオフ周波数: {FC_HZ / 1e9:.1f} GHz",
-                f"・減衰量: {TARGET_ATTENUATION_DB:.0f} dB以上 @ {STOP_FREQ_HZ / 1e9:.1f} GHz",
-                "・最大リップル: 3 dB以下",
+                f"Cutoff frequency: {FC_HZ / 1e9:.1f} GHz",
+                f"Stopband point: {STOP_FREQ_HZ / 1e9:.1f} GHz",
+                f"Required attenuation: {TARGET_ATTENUATION_DB:.0f} dB or more",
+                "Allowed ripple: 3 dB or less",
             ]
         ),
         fontsize=14,
-        linespacing=1.65,
+        color="#1f2d3d",
+        linespacing=1.75,
         va="top",
+        transform=ax_info.transAxes,
     )
-    ax_info.text(0.0, 0.43, "横軸", fontsize=15, weight="bold")
+    ax_info.text(0.07, 0.48, "Normalized offset", fontsize=13, weight="bold", color="#243447", transform=ax_info.transAxes)
     ax_info.text(
-        0.04,
-        0.33,
+        0.07,
+        0.38,
         rf"$\left|\frac{{\omega}}{{\omega_c}}\right|-1"
         rf"=\frac{{{STOP_FREQ_HZ / 1e9:.1f}}}{{{FC_HZ / 1e9:.1f}}}-1"
         rf"={delta:.3f}$",
-        fontsize=17,
+        fontsize=16,
+        color="#1f2d3d",
+        transform=ax_info.transAxes,
     )
 
-    ladder_ax = ax_info.inset_axes([0.03, 0.02, 0.92, 0.24])
+    ladder_ax = ax_info.inset_axes([0.06, 0.05, 0.88, 0.23])
     draw_ladder(ladder_ax)
 
     for ax, ripple_db in [(ax_top, RIPPLES_DB[0]), (ax_bottom, RIPPLES_DB[1])]:
         for order in range(1, 11):
             attenuation = chebyshev_attenuation_db(order, ripple_db, omega_ratio)
             lw = 2.7 if order == SELECTED_ORDER else 1.1
-            color = "tab:red" if order == SELECTED_ORDER else "0.25"
+            color = "#006d77" if order == SELECTED_ORDER else "#6c757d"
             alpha = 1.0 if order == SELECTED_ORDER else 0.72
             ax.semilogx(x, attenuation, color=color, lw=lw, alpha=alpha)
             label_x = 0.74
@@ -148,16 +183,16 @@ def main():
         )
         n_required = required_order(ripple_db, normalized_frequency, TARGET_ATTENUATION_DB)
 
-        ax.axvline(delta, color="tab:red", lw=1.8)
-        ax.axhline(TARGET_ATTENUATION_DB, color="tab:red", lw=1.8)
-        ax.scatter([delta], [TARGET_ATTENUATION_DB], color="tab:red", s=46, zorder=5)
-        ax.scatter([delta], [actual_selected], color="tab:blue", s=46, zorder=5)
+        ax.axvline(delta, color="#d08c00", lw=1.8)
+        ax.axhline(TARGET_ATTENUATION_DB, color="#d08c00", lw=1.8)
+        ax.scatter([delta], [TARGET_ATTENUATION_DB], color="#d08c00", s=46, zorder=5)
+        ax.scatter([delta], [actual_selected], color="#006d77", s=46, zorder=5)
         ax.annotate(
             f"n={SELECTED_ORDER}: {actual_selected:.1f} dB",
             xy=(delta, actual_selected),
             xytext=(0.38, min(actual_selected + 12, 62)),
-            arrowprops={"arrowstyle": "->", "color": "tab:blue", "lw": 1.4},
-            color="tab:blue",
+            arrowprops={"arrowstyle": "->", "color": "#006d77", "lw": 1.4},
+            color="#006d77",
             fontsize=13,
         )
         ax.text(
@@ -165,7 +200,8 @@ def main():
             61,
             f"{ripple_db:g} dBリップル / 必要次数: {n_required}次以上",
             fontsize=16,
-            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8},
+            color="#1f2d3d",
+            bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.86},
         )
 
         ax.set_xlim(0.01, 1.0)
@@ -173,7 +209,8 @@ def main():
         ax.set_ylabel("減衰量 [dB]")
         ax.grid(True, which="both")
 
-    ax_top.set_title("チェビシェフI型LPFの次数選定", fontsize=20, pad=12)
+    ax_top.set_title("0.5 dB ripple", fontsize=14, color="#1f2d3d", loc="left")
+    ax_bottom.set_title("3 dB ripple", fontsize=14, color="#1f2d3d", loc="left")
     ax_bottom.set_xlabel(r"正規化周波数の偏差  $|\omega/\omega_c| - 1$")
 
     fig.savefig(OUTPUT_PATH, dpi=200)
