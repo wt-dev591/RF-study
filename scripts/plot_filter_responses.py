@@ -21,13 +21,15 @@ OUTPUT_PATH = Path(__file__).resolve().parents[1] / "logs" / "filter_response_co
 
 
 def analog_lpf_response(b, a, frequency_hz):
-    """Return magnitude [dB] for an analog filter."""
+    """Return magnitude [dB] and group delay [ns] for an analog filter."""
     angular_frequency = 2.0 * np.pi * frequency_hz
     _, h = signal.freqs(b, a, worN=angular_frequency)
 
     magnitude_db = 20.0 * np.log10(np.maximum(np.abs(h), 1e-12))
+    phase = np.unwrap(np.angle(h))
+    group_delay_s = -np.gradient(phase, angular_frequency)
 
-    return magnitude_db
+    return magnitude_db, group_delay_s * 1e9
 
 
 def design_filters():
@@ -79,7 +81,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    frequency_hz = np.linspace(0.01e9, 5.0e9, 4000)
+    frequency_hz = np.linspace(0.01e9, 10.0e9, 4000)
     filters = design_filters()
 
     plt.rcParams.update(
@@ -91,12 +93,12 @@ def main():
         }
     )
 
-    fig, (ax_gain, ax_ripple) = plt.subplots(2, 1, constrained_layout=True)
+    fig, (ax_gain, ax_delay) = plt.subplots(2, 1, sharex=True, constrained_layout=True)
 
     for name, (b, a) in filters.items():
-        magnitude_db = analog_lpf_response(b, a, frequency_hz)
+        magnitude_db, group_delay_ns = analog_lpf_response(b, a, frequency_hz)
         ax_gain.plot(frequency_hz / 1e9, magnitude_db, label=name, linewidth=1.8)
-        ax_ripple.plot(frequency_hz / 1e9, magnitude_db, label=name, linewidth=1.8)
+        ax_delay.plot(frequency_hz / 1e9, group_delay_ns, label=name, linewidth=1.8)
 
     ax_gain.axvline(CUTOFF_HZ / 1e9, color="black", linestyle="--", linewidth=1.0)
     ax_gain.set_title(
@@ -104,17 +106,13 @@ def main():
         f"(fc = {CUTOFF_HZ / 1e9:.1f} GHz)"
     )
     ax_gain.set_ylabel("Magnitude [dB]")
-    ax_gain.set_xlim(0, 5)
-    ax_gain.set_ylim(-40, 3)
+    ax_gain.set_ylim(-80, 3)
     ax_gain.legend(loc="lower left")
 
-    ax_ripple.axvline(CUTOFF_HZ / 1e9, color="black", linestyle="--", linewidth=1.0)
-    ax_ripple.axhline(-PASSBAND_RIPPLE_DB, color="gray", linestyle=":", linewidth=1.0)
-    ax_ripple.set_title("Passband ripple zoom")
-    ax_ripple.set_xlabel("Frequency [GHz]")
-    ax_ripple.set_ylabel("Magnitude [dB]")
-    ax_ripple.set_xlim(0, CUTOFF_HZ / 1e9)
-    ax_ripple.set_ylim(-1.2, 0.25)
+    ax_delay.axvline(CUTOFF_HZ / 1e9, color="black", linestyle="--", linewidth=1.0)
+    ax_delay.set_xlabel("Frequency [GHz]")
+    ax_delay.set_ylabel("Group delay [ns]")
+    ax_delay.set_ylim(bottom=0)
 
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(OUTPUT_PATH, dpi=200)
