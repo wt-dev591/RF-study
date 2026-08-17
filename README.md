@@ -11,6 +11,7 @@ Qucs-Sを使って、RF回路・伝送線路理論の基礎を確認するため
 - Qucs-S
 - GitHub
 - 必要に応じて Python
+- 文書整理・壁打ち・確認に Codex / ChatGPT を利用
 
 ## 学習テーマ
 
