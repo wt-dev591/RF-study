@@ -1,0 +1,19 @@
+<Qucs Dataset 1.0.7>
+<indep frequency 1>
+  +5.17000000000000000000e+09
+</indep>
+<dep power_reflection_coefficient frequency>
+  +4.00000000000000088818e+00
+</dep>
+<dep VSWR frequency>
+  +1.49999999999999977796e+00
+</dep>
+<dep RL frequency>
+  +1.39794000867203749294e+01
+</dep>
+<dep dBS11 frequency>
+  -1.39794000867203749294e+01
+</dep>
+<dep S[1,1] frequency>
+  +2.00000000000000011102e-01
+</dep>
